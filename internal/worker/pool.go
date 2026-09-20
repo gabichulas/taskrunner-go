@@ -2,6 +2,8 @@ package worker
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -17,14 +19,27 @@ type Pool struct {
 	pollInterval time.Duration
 }
 
-func NewPool(repository core.Repository, handlers map[string]Handler, concurrency int, pollInterval time.Duration) *Pool {
-	pool := Pool{
+func NewPool(repository core.Repository, concurrency int, pollInterval time.Duration) *Pool {
+	return &Pool{
 		repository:   repository,
-		handlers:     handlers,
+		handlers:     make(map[string]Handler),
 		concurrency:  concurrency,
 		pollInterval: pollInterval,
 	}
-	return &pool
+}
+
+func (p *Pool) Register(task string, h Handler) error {
+	if task == "" {
+		return errors.New("task name cannot be empty")
+	}
+	if h == nil {
+		return errors.New("handler cannot be nil")
+	}
+	if _, exists := p.handlers[task]; exists {
+		return fmt.Errorf("handler already registered for task: %s", task)
+	}
+	p.handlers[task] = h
+	return nil
 }
 
 func (p *Pool) Start(ctx context.Context) {
@@ -40,6 +55,41 @@ func (p *Pool) Start(ctx context.Context) {
 	wg.Wait()
 }
 
+func (p *Pool) saveContext(parent context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(parent), 5*time.Second)
+}
+
 func (p *Pool) runWorker(ctx context.Context, id int) {
-	return
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		job, err := p.repository.ClaimJob(ctx)
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(p.pollInterval):
+				continue
+			}
+		}
+		handler, ok := p.handlers[job.Task]
+		if !ok {
+			saveCtx, cancel := p.saveContext(ctx)
+			p.repository.FailJob(saveCtx, job.ID, fmt.Sprintf("unregistered task handler: %s", job.Task))
+			cancel()
+			continue
+		}
+		res, err := handler(ctx, job)
+		if err != nil {
+			saveCtx, cancel := p.saveContext(ctx)
+			p.repository.FailJob(saveCtx, job.ID, err.Error())
+			cancel()
+			continue
+		}
+
+		saveCtx, cancel := p.saveContext(ctx)
+		p.repository.CompleteJob(saveCtx, job.ID, res)
+		cancel()
+	}
 }

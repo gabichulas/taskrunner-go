@@ -73,7 +73,7 @@ func (s *MongoStore) FailJob(ctx context.Context, id bson.ObjectID, errMsg strin
 	update := bson.M{
 		"$set": bson.M{
 			"state":       core.StateFailed,
-			"error":       errMsg,
+			"err":         errMsg,
 			"updated_at":  now,
 			"finished_at": now,
 			"locked_at":   nil,
@@ -121,4 +121,18 @@ func (s *MongoStore) Enqueue(ctx context.Context, job *core.Job) (bson.ObjectID,
 		return bson.NilObjectID, err
 	}
 	return job.ID, nil
+}
+
+func (s *MongoStore) EnsureIndexes(ctx context.Context) error {
+	model := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "state", Value: 1},
+			{Key: "created_at", Value: 1},
+		},
+	}
+	_, err := s.collection.Indexes().CreateOne(ctx, model)
+	if err != nil {
+		return fmt.Errorf("failed to create indexes: %w", err)
+	}
+	return nil
 }
