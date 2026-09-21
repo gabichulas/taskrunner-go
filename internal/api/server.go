@@ -23,7 +23,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /healthz", s.handleHealthCheck)
 	mux.HandleFunc("POST /jobs", s.handleEnqueueJob)
 	mux.HandleFunc("GET /jobs/{id}", s.handleGetJobByID)
-	// TODO: Option 2 - Register GET /jobs endpoint to support listing jobs with status filtering and pagination.
+	mux.HandleFunc("GET /jobs", s.handleGetJobs)
 
 	return mux
 }

@@ -70,3 +70,7 @@ func (s *Server) handleGetJobByID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
+
+func (s *Server) handleGetJobs(w http.ResponseWriter, r *http.Request) {
+	return
+}
