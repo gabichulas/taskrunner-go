@@ -1,3 +1,4 @@
+// Package api provides HTTP transport adapters and handlers for job ingestion and querying.
 package api
 
 import (
@@ -22,6 +23,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /healthz", s.handleHealthCheck)
 	mux.HandleFunc("POST /jobs", s.handleEnqueueJob)
 	mux.HandleFunc("GET /jobs/{id}", s.handleGetJobByID)
+	// TODO: Option 2 - Register GET /jobs endpoint to support listing jobs with status filtering and pagination.
 
 	return mux
 }

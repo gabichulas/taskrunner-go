@@ -1,3 +1,4 @@
+// Package worker implements the concurrency orchestration engine and worker pool lifecycle.
 package worker
 
 import (
@@ -42,6 +43,7 @@ func (p *Pool) Register(task string, h Handler) error {
 	return nil
 }
 
+// TODO: Option 3 - Implement Reaper/Sweeper goroutine to recover stale jobs where state is StateRunning and locked_at exceeds timeout.
 func (p *Pool) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 

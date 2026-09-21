@@ -1,3 +1,4 @@
+// Package main initializes and runs the HTTP API server for taskrunner-go.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package store provides persistence adapters for taskrunner-go using MongoDB.
 package store
 
 import (
@@ -69,6 +70,7 @@ func (s *MongoStore) CompleteJob(ctx context.Context, id bson.ObjectID, result a
 }
 
 func (s *MongoStore) FailJob(ctx context.Context, id bson.ObjectID, errMsg string) error {
+	// TODO: Option 1 - Implement retry mechanism: if attempts < max_retries, transition state to StateQueued with backoff instead of StateFailed.
 	now := time.Now().UTC()
 	update := bson.M{
 		"$set": bson.M{

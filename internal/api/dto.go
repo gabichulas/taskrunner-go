@@ -1,3 +1,4 @@
+// Package api provides HTTP transport adapters and handlers for job ingestion and querying.
 package api
 
 import "time"

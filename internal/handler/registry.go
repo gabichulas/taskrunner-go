@@ -1,3 +1,4 @@
+// Package handler implements concrete job task execution strategies.
 package handler
 
 import (

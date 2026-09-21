@@ -1,3 +1,4 @@
+// Package main initializes and runs the background worker pool for taskrunner-go.
 package main
 
 import (
